@@ -12,12 +12,13 @@ Repositório oficial dos laboratórios práticos da disciplina **Data Warehouse,
 
 Os laboratórios foram desenhados para serem executados em um ambiente padronizado (GitHub Codespaces + AWS Academy), garantindo que todos os alunos tenham a mesma experiência, sem precisar instalar nada localmente.
 
-Você irá percorrer um caminho que evolui da fundação do Data Lake até o consumo analítico em um Data Warehouse tradicional:
+Você irá percorrer um caminho que evolui da fundação do Data Lake até o consumo analítico em um Data Warehouse tradicional, fechando com um trabalho final que consolida tudo:
 
 1. **Preparação do ambiente** — configuração do Codespaces, AWS Academy, credenciais e chave SSH.
 2. **Storage** — envio de arquivos ao S3 e estratégias de upload.
 3. **Open Table Format** — criação, evolução e consumo de tabelas Apache Iceberg usando o Amazon Athena.
 4. **Data Modeling e Data Warehouse** — infraestrutura Redshift via Terraform, modelagem dimensional com star schema, SCDs e análise de como a evolução do negócio impacta o modelo.
+5. **Trabalho Final** — projeto end-to-end que consolida ingestão, catalogação Glue, tabelas Iceberg, carga incremental (`MERGE`), otimização e query executiva, com entregáveis prontos para upload no portal FIAP.
 
 ---
 
@@ -73,6 +74,7 @@ Comece pelo setup e avance sequencialmente. Cada laboratório tem seu próprio `
 | 03.1 | **Data Modeling — Provisionamento** | Sobe toda a infraestrutura do lab (S3, Glue Data Catalog, cluster Redshift `ra3.large` × 2 nós) via Terraform com state remoto no S3 e carrega o dataset TPC-H SF10 (~10 GB, 60M linhas em `lineitem`) com o script `load_tpch.sh` em ~1m40 via S3-to-S3 server-side copy. | [03-Data-Modeling-e-Data-Warehouse/01-provisionamento](03-Data-Modeling-e-Data-Warehouse/01-provisionamento/README.md) |
 | 03.2 | **Do OLTP ao Star Schema** | Implementa três modelagens da mesma base TPC-H (espelho OLTP, star SCD Tipo 1, star SCD Tipo 2), executa a mesma pergunta de negócio nas três e observa por que os números divergem legitimamente. Fecha com um `DECISION.md` no estilo ADR. | [03-Data-Modeling-e-Data-Warehouse/02-modelagem-e-carga](03-Data-Modeling-e-Data-Warehouse/02-modelagem-e-carga/README.md) |
 | 03.3 | **Evolução do negócio no warehouse** | Três evoluções aplicadas sobre o star schema: nova fórmula de receita com Materialized Views versionadas, redefinição de "cliente ativo" (SCD2 × fato snapshot periódico) e SLA de 5s no dashboard executivo via redesign de distkey + MV pré-agregada. | [03-Data-Modeling-e-Data-Warehouse/03-analise-dimensional](03-Data-Modeling-e-Data-Warehouse/03-analise-dimensional/README.md) |
+| 04 | **Trabalho Final — Olist Lakehouse** | Projeto end-to-end consolidando o que foi visto: setup automatizado (S3 + dataset sintético determinístico, seed=42), Glue Crawler, tabelas Iceberg via CTAS (Parquet + ZSTD), coluna calculada `valor_final`, carga incremental via `MERGE INTO`, `OPTIMIZE` e query executiva (top 5 clientes por receita). Fecha com `DECISION.md` no estilo ADR e zip pronto para upload no portal FIAP. | [04-Trabalho-Final](04-Trabalho-Final/README.md) |
 
 ---
 
@@ -91,6 +93,8 @@ Comece pelo setup e avance sequencialmente. Cada laboratório tem seu próprio `
 │   ├── 01-provisionamento/             # Lab 03.1 — Terraform + script de carga do TPC-H SF10
 │   ├── 02-modelagem-e-carga/           # Lab 03.2 — três modelagens, três respostas
 │   └── 03-analise-dimensional/         # Lab 03.3 — evolução do negócio no warehouse
+├── 04-Trabalho-Final/                 # Projeto final — Iceberg + Glue + MERGE + query executiva
+│   └── scripts/                        #   setup_aluno.sh + generate_dataset.py (dataset sintético seed=42) + run_athena_sql.sh
 ├── .devcontainer/                     # Configuração do GitHub Codespaces
 └── FIAP.png
 ```
@@ -110,12 +114,16 @@ Comece pelo setup e avance sequencialmente. Cada laboratório tem seu próprio `
    │
    ▼
 03.1 Provisionamento ──▶ 03.2 Star Schema ──▶ 03.3 Evolução do negócio
+   │
+   ▼
+04 Trabalho Final
 ```
 
 Cada laboratório assume que os anteriores foram concluídos. Em especial:
 
 - Os labs de **Open Table Format (02.x)** dependem do bucket `base-config-<SEU RM>` criado no setup inicial e do ambiente TPC-DS preparado no primeiro lab do Athena.
 - Os labs de **Data Warehouse (03.x)** dependem da infraestrutura provisionada pelo Terraform em `03-Data-Modeling-e-Data-Warehouse/01-provisionamento/` e usam o dataset TPC-H SF10 carregado pelo script `load_tpch.sh` (S3-to-S3 server-side copy, ~1m40).
+- O **Trabalho Final (04)** assume que você viu pelo menos os Labs 02.1 e 02.2 (Iceberg básico + `MERGE INTO`/`OPTIMIZE`); não depende do Redshift do Lab 03 e usa Athena exclusivamente. O dataset é gerado por `04-Trabalho-Final/scripts/generate_dataset.py` (sintético, determinístico com `seed=42` — todo aluno produz os mesmos números).
 
 ---
 
